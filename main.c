@@ -12,25 +12,27 @@
 #include <unistd.h>
 
 char *read_line() {
-    char *result = readline("");
-    if (result == nullptr)
+    char *prompet = get_default_prompet();
+    if (prompet == nullptr)
         return nullptr;
+    char *result = readline(prompet);
+    if (result == nullptr) {
+        free(prompet);
+        return nullptr;
+    }
     if (result[0] != ' ' && result[0] != '\0')
         add_history(result);
+    free(prompet);
     return result;
 }
 
 int start_shell() {
     size_t result = 0;
-    int status = 0;
     char *buf = nullptr;
     Parser parser;
     init_parser(&parser);
 
     while (true) {
-        status = print_default_prompet();
-        if (status == -1)
-            defer(1);
         buf = read_line();
         if (buf == nullptr)
             defer(1);
