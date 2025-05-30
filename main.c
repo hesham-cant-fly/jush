@@ -1,5 +1,8 @@
 #include "config.h"
+#include "my_helpers.h"
 #include "parser.h"
+#include <readline/history.h>
+#include <readline/readline.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,32 +11,46 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-int read_line(char **out, size_t *len) {
-    int status = getline(out, len, stdin);
-    return status;
+char *read_line() {
+    char *result = readline("");
+    if (result == nullptr)
+        return nullptr;
+    if (result[0] != ' ' && result[0] != '\0')
+        add_history(result);
+    return result;
 }
 
 int start_shell() {
+    size_t result = 0;
     int status = 0;
-    char *b = malloc(JUSH_DEFAULT_LEN + 1);
-    size_t input_len = JUSH_DEFAULT_LEN;
+    char *buf = nullptr;
+    Parser parser;
+    init_parser(&parser);
+
     while (true) {
         status = print_default_prompet();
-        if (status == -1) {
-            free(b);
-            return 1;
+        if (status == -1)
+            defer(1);
+        buf = read_line();
+        if (buf == nullptr)
+            defer(1);
+        reinit_parser(&parser, buf);
+        ParserState state = parser_parse_execute(&parser);
+        switch (state) {
+        case PARSER_EXIT:
+            defer(0);
+        case PARSER_FAILURE:
+            defer(1);
+        case PARSER_SUCCESS:
+            break;
         }
-        status = read_line(&b, &input_len);
-        if (status == -1) {
-            free(b);
-            return 1;
-        }
-        Parser p = init_parser(b);
-        parser_parse_execute(&p);
-        deinit_parser(&p);
+        free(buf);
     }
-    free(b);
-    return 0;
+
+defer:
+    deinit_parser(&parser);
+    free(buf);
+    return result;
 }
 
 int main() {

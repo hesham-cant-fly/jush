@@ -1,5 +1,7 @@
 #include "parser.h"
+#include "builtins.h"
 #include "my_array.h"
+#include "my_helpers.h"
 #include "my_string.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -14,35 +16,60 @@ static inline Token parser_prev(Parser *self) { return self->prev; }
 static Token parser_advance(Parser *self);
 static Token make_token(Parser *self, TokenKind kind);
 
-Parser init_parser(const char *source) {
-    Parser parser;
-    memset(&parser, 0, sizeof(0));
-    parser.source = source;
-    parser.start = (char *)source;
-    parser.current_ch = (char *)source;
-    parser.current_lexem = string_new(30);
-    parser.prev_lexem = string_new(30);
-    parser.at_end = false;
-
-    parser_advance(&parser);
-
-    return parser;
+void init_parser(Parser *self) {
+    memset(self, 0, sizeof(Parser));
+    self->source = nullptr;
+    self->start = nullptr;
+    self->current_ch = nullptr;
+    self->current_lexem = string_new(30);
+    self->prev_lexem = string_new(30);
+    self->at_end = false;
 }
 
-void deinit_parser(Parser *self) { string_delete(&self->current_lexem); }
+void reinit_parser(Parser *self, const char *source) {
+    self->source = source;
+    self->start = (char *)source;
+    self->current_ch = (char *)source;
+    self->current_lexem.len = 0;
+    self->prev_lexem.len = 0;
+    self->at_end = false;
+
+    parser_advance(self);
+}
+
+void deinit_parser(Parser *self) {
+    string_delete(&self->current_lexem);
+    string_delete(&self->prev_lexem);
+}
 
 ParserState parser_parse_execute(Parser *self) {
+    ParserState result = PARSER_SUCCESS;
     char **args = arrinit(char *);
 
     while (!self->at_end) {
         Token tok = parser_advance(self);
-        if (tok.kind == TOKEN_EOL) {
-            arrpush(args, NULL);
+        if (tok.kind == TOKEN_EOL || tok.kind == TOKEN_EOF) {
+            arrpush(args, nullptr);
             break;
         }
         char *arg = malloc(tok.lexem_len + 1);
         memcpy(arg, tok.lexem, tok.lexem_len + 1);
         arrpush(args, arg);
+    }
+
+    // Check for built-in
+    for (size_t i = 0; builtin_str[i] != nullptr; i++) {
+        if (strcmp(args[0], builtin_str[i]) == 0) {
+            BuiltinStatus res = builtin_func[i](args);
+            switch (res) {
+            case BUILTIN_FAIL:
+                defer(PARSER_FAILURE);
+            case BUILTIN_EXIT:
+                defer(PARSER_EXIT);
+            default:
+                defer(PARSER_SUCCESS);
+            }
+        }
     }
 
     // Execution
@@ -61,16 +88,17 @@ ParserState parser_parse_execute(Parser *self) {
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
     }
 
+defer:
     //                                  ٧٧٧-- Ignoring the NULL charcter.
     for (size_t i = 0; i < arrlen(args) - 1; i++) {
         free(args[i]);
     }
     arrfree(args);
-    return PARSER_SUCCESS;
+    return result;
 }
 
 static Token parser_advance(Parser *self) {
-    self->prev_lexem.len = 0;
+    self->prev_lexem.len = self->current_lexem.len;
     memcpy(self->prev_lexem.data, self->current_lexem.data,
            self->current_lexem.len + 1);
     self->current_lexem.len = 0;
@@ -120,13 +148,20 @@ static Token scan_name(Parser *self) {
     do {
         ch = *self->current_ch;
         if (ch == '\0') {
-            return make_token(self, TOKEN_EOL);
+            break;
         }
 
         switch (ch) {
         case '\\':
             string_push(&self->current_lexem, *++self->current_ch);
             break;
+        case '"': {
+            ch = *++self->current_ch;
+            while (ch != '"') {
+                string_push(&self->current_lexem, ch);
+                ch = *++self->current_ch;
+            }
+        } break;
         default:
             string_push(&self->current_lexem, ch);
         }
@@ -144,7 +179,7 @@ static Token scan_token(Parser *self) {
     char ch = *self->current_ch;
 
     if (ch == '\0') {
-        return make_token(self, TOKEN_EOL);
+        return make_token(self, TOKEN_EOF);
     }
 
     return scan_name(self);

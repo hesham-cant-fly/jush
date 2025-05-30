@@ -7,6 +7,7 @@
 
 typedef enum ParserState : int {
     PARSER_SUCCESS,
+    PARSER_EXIT,
     PARSER_FAILURE,
 } ParserState;
 
@@ -36,7 +37,8 @@ typedef struct Parser {
     bool at_end;
 } Parser;
 
-Parser init_parser(const char *source);
+void init_parser(Parser *self);
+void reinit_parser(Parser *self, const char *source);
 void deinit_parser(Parser *self);
 ParserState parser_parse_execute(Parser *self);
 
