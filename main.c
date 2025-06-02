@@ -28,10 +28,46 @@ char *read_line() {
     return result;
 }
 
+int run_file(const char *path, Environment *env) {
+    int result = 0;
+    FILE *f = fopen(path, "r");
+    if (f == nullptr) {
+        return result;
+    }
+    fseek(f, 0, SEEK_END);
+    size_t content_len = ftell(f);
+    rewind(f);
+
+    char *content = malloc(content_len + 1);
+    if (content == nullptr) {
+        defer(1);
+    }
+    if (content_len != fread(content, sizeof(char), content_len, f)) {
+        defer(1);
+    }
+    content[content_len] = '\0';
+
+    LauncherState state = launch(content, env);
+    switch (state) {
+    case LAUNCHER_SUCCESS:
+        break;
+    default:
+        result = 1;
+    }
+
+defer:
+    if (content != nullptr) {
+        free(content);
+    }
+    fclose(f);
+    return result;
+}
+
 int start_shell() {
     size_t result = 0;
     char *buf = nullptr;
     Environment env = init_env();
+    run_file(MOSH_DEFAULT_CONFIG_PATH, &env);
 
     while (true) {
         buf = read_line();

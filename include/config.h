@@ -7,9 +7,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define JUSH_DEFAULT_PROMPET "$"
-#define JUSH_DEFAULT_VERSION "0.0.1"
-#define JUSH_DEFAULT_LEN 50
+#define MOSH_DEFAULT_PROMPET "$"
+#define MOSH_DEFAULT_VERSION "0.0.1"
+#define MOSH_DEFAULT_LEN 50
+#define MOSH_DEFAULT_CONFIG_PATH "./.moshrc"
 
 char *get_default_prompet() {
     char *buf = getcwd(nullptr, 0);
@@ -18,14 +19,14 @@ char *get_default_prompet() {
         return nullptr;
     }
     size_t len = snprintf(NULL, 0, "[%s %s/]%s ", getenv("USER"), the_basename,
-                          JUSH_DEFAULT_PROMPET);
+                          MOSH_DEFAULT_PROMPET);
     char *out = malloc(len + 1);
     if (out == nullptr) {
         free(buf);
         return nullptr;
     }
     snprintf(out, len + 1, "[%s %s/]%s ", getenv("USER"), the_basename,
-             JUSH_DEFAULT_PROMPET);
+             MOSH_DEFAULT_PROMPET);
     free(buf);
     return out;
 }

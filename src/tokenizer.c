@@ -47,6 +47,8 @@ Token scan_token(Tokenizer *self) {
     switch (ch) {
     case ';':
         return make_token(self, TOKEN_SEMICOLON);
+    case '\n':
+        return make_token(self, TOKEN_EOL);
     default:
         self->current--;
         return scan_symbol(self);
