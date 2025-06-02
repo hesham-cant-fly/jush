@@ -1,6 +1,7 @@
 #include "tokenizer.h"
 #include "my_helpers.h"
 #include "my_string.h"
+#include <readline/readline.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -42,7 +43,14 @@ Token scan_token(Tokenizer *self) {
         return make_token(self, TOKEN_EOF);
     }
 
-    return scan_symbol(self);
+    advance(self);
+    switch (ch) {
+    case ';':
+        return make_token(self, TOKEN_SEMICOLON);
+    default:
+        self->current--;
+        return scan_symbol(self);
+    }
 }
 
 static Token scan_symbol(Self self) {
@@ -86,6 +94,7 @@ static bool is_forbiden(char ch) {
     case '\t':
     case '\r':
     case '\n':
+    case ';':
         return true;
     default:
         return false;

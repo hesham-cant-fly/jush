@@ -90,11 +90,13 @@ BuiltinStatus mosh_alias(char **args, Environment *env) {
             fprintf(stderr, "mosh: Undefined alias \"%s\"\n", name.data);
             defer(BUILTIN_FAIL);
         }
-        printf("%s=\"%s\"\n", alias->key, alias->value);
+        printf(ANSI_CODE_BOLD "%s" ANSI_CODE_RESET "=" ANSI_CODE_YELLOW
+                              "\"%s\"" ANSI_CODE_RESET "\n",
+               alias->key, alias->value);
         defer(BUILTIN_SUCCESS);
     }
 
-    i++;
+    i += 1;
     for (; args[1][i] != '\0'; i++) {
         string_push(&value, args[1][i]);
     }

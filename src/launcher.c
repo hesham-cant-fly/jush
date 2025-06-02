@@ -3,6 +3,7 @@
 #include "environment.h"
 #include "my_array.h"
 #include "my_helpers.h"
+#include "my_string.h"
 #include "tokenizer.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -41,26 +42,32 @@ LauncherState launch(char *source, Environment *env) {
 
 LauncherState launcher_launch(Launcher *self) {
     LauncherState result = LAUNCHER_SUCCESS;
-
     char **args = arrinit(char *);
 
     while (!at_end(self)) {
-        Token tok = advance(self);
-        if (tok.kind == TOKEN_EOL || tok.kind == TOKEN_EOF) {
-            arrpush(args, nullptr); // let it leak 🗣
-            break;
+        arrsetlen(args, 0);
+        while (!at_end(self)) {
+            Token tok = advance(self);
+            if (tok.kind == TOKEN_EOL || tok.kind == TOKEN_EOF ||
+                tok.kind == TOKEN_SEMICOLON) {
+                arrpush(args, nullptr); // let it leak 🗣
+                break;
+            }
+            char *arg = strdup(tok.lexem);
+            if (arg == nullptr)
+                return LAUNCHER_FAILURE;
+            arrpush(args, arg);
         }
-        char *arg = strdup(tok.lexem);
-        if (arg == nullptr)
-            return LAUNCHER_FAILURE;
-        arrpush(args, arg);
-    }
-    arrpush(args, nullptr);
+        arrpush(args, nullptr);
 
-    if (args[0] != nullptr) {
-        result = execute(self, args);
+        if (args[0] != nullptr) {
+            result = execute(self, args);
+        }
+        for (size_t i = 0; args[i] != nullptr; i++) {
+            free(args[i]);
+            args[i] = nullptr;
+        }
     }
-
     for (size_t i = 0; args[i] != nullptr; i++) {
         free(args[i]);
     }
@@ -90,7 +97,14 @@ static LauncherState execute(Self self, char **args) {
     {
         Alias *alias = env_get_alias(self->env, args[0]);
         if (alias != nullptr) {
-            return launch(alias->value, self->env);
+            String alias_args = string_from_chars_copy(alias->value);
+            string_reserve(&alias_args, alias_args.len + 1);
+            for (size_t i = 1; args[i] != nullptr; i++) {
+                string_push(&alias_args, args[i]);
+            }
+            LauncherState result = launch(alias->value, self->env);
+            string_delete(&alias_args);
+            return result;
         }
     }
 

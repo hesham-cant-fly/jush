@@ -26,5 +26,4 @@ Alias *env_get_alias(Environment *self, const char *key) {
 
 void env_set_alias(Environment *self, const char *key, char *value) {
     hm_set(self->aliases, key, value);
-    hm_print_pro(self->aliases);
 }
