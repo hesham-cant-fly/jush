@@ -1,6 +1,7 @@
 #include "config.h"
+#include "environment.h"
+#include "launcher.h"
 #include "my_helpers.h"
-#include "parser.h"
 #include <readline/history.h>
 #include <readline/readline.h>
 #include <stddef.h>
@@ -9,6 +10,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 char *read_line() {
@@ -29,29 +31,26 @@ char *read_line() {
 int start_shell() {
     size_t result = 0;
     char *buf = nullptr;
-    Parser parser;
-    init_parser(&parser);
+    Environment env = init_env();
 
     while (true) {
         buf = read_line();
         if (buf == nullptr)
             defer(1);
-        reinit_parser(&parser, buf);
-        ParserState state = parser_parse_execute(&parser);
+        LauncherState state = launch(buf, &env);
         switch (state) {
-        case PARSER_EXIT:
+        case LAUNCHER_EXIT:
             defer(0);
-        case PARSER_FAILURE:
-            defer(1);
-        case PARSER_SUCCESS:
+        case LAUNCHER_FAILURE:
+        case LAUNCHER_SUCCESS:
             break;
         }
         free(buf);
     }
 
 defer:
-    deinit_parser(&parser);
     free(buf);
+    deinit_env(&env);
     return result;
 }
 

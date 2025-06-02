@@ -20,10 +20,6 @@ typedef struct ArrayListHeader {
 #define GROW_FACTOR 1.5
 #endif
 
-#define NOSTMT                                                                 \
-    do {                                                                       \
-    } while (0)
-
 #define arrinit(T) (T *)(create_array(sizeof(T)))
 #define arrfree(arr) (((arr) != NULL) ? free(arrheader(arr)) : 0)
 #define arrheader(arr)                                                         \
