@@ -19,7 +19,6 @@ static Token advance(Self self);
 static Token previous(Self self);
 static Token peek(Self self);
 static bool at_end(Self self);
-static LauncherState execute(Self self, char **args);
 
 Launcher init_launcher(char *source, Environment *env) {
     Launcher result = {
@@ -92,7 +91,7 @@ static Token previous(Self self) { return self->tokenize.prev_tok; }
 static Token peek(Self self) { return self->tokenize.current_tok; }
 static bool at_end(Self self) { return self->tokenize.done; }
 
-static LauncherState execute(Self self, char **args) {
+LauncherState execute(Self self, char **args) {
     // Check for aliases
     {
         Alias *alias = env_get_alias(self->env, args[0]);
@@ -124,6 +123,18 @@ static LauncherState execute(Self self, char **args) {
     }
 
     // Execute the actual command
+    return execute_command(args);
+
+    // Child's exit code
+    // if (WIFEXITED(status)) {
+    //     return WEXITSTATUS(status);
+    // } else { // Child was terminated by a signal
+    //     return -1;
+    // }
+    // return LAUNCHER_SUCCESS;
+}
+
+LauncherState execute_command(char **args) {
     int status = 0;
     pid_t pid = fork(), wpid;
     unused(wpid);
@@ -145,11 +156,5 @@ static LauncherState execute(Self self, char **args) {
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
     }
 
-    // Child's exit code
-    // if (WIFEXITED(status)) {
-    //     return WEXITSTATUS(status);
-    // } else { // Child was terminated by a signal
-    //     return -1;
-    // }
     return LAUNCHER_SUCCESS;
 }

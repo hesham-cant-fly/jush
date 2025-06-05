@@ -8,13 +8,13 @@ typedef enum BuiltinStatus : int {
     BUILTIN_FAIL,
 } BuiltinStatus;
 
+extern char *builtin_str[];
+extern BuiltinStatus (*builtin_func[])(char **, Environment *);
+
 BuiltinStatus mosh_cd(char **args, Environment *env);
 BuiltinStatus mosh_exit(char **args, Environment *env);
 BuiltinStatus mosh_help(char **args, Environment *env);
 BuiltinStatus mosh_alias(char **args, Environment *env);
-
-extern char *builtin_str[];
-
-extern BuiltinStatus (*builtin_func[])(char **, Environment *);
+BuiltinStatus mosh_command(char **args, Environment *env);
 
 #endif // BUILTINS_H_

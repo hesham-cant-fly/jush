@@ -19,5 +19,7 @@ Launcher init_launcher(char *source, Environment *env);
 void deinit_launcher(Launcher *self);
 LauncherState launcher_launch(Launcher *self);
 LauncherState launch(char *source, Environment *env);
+LauncherState execute(Launcher *self, char **args);
+LauncherState execute_command(char **args);
 
 #endif // LAUNCHER_H_

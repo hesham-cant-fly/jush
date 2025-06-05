@@ -1,5 +1,6 @@
 #include "builtins.h"
 #include "environment.h"
+#include "launcher.h"
 #include "my_hash.h"
 #include "my_helpers.h"
 #include "my_string.h"
@@ -11,11 +12,11 @@
 #include <unistd.h>
 
 char *builtin_str[] = {
-    "cd", "exit", "help", "alias", nullptr,
+    "cd", "exit", "help", "alias", "command", nullptr,
 };
 
 BuiltinStatus (*builtin_func[])(char **, Environment *) = {
-    &mosh_cd, &mosh_exit, &mosh_help, &mosh_alias, nullptr,
+    &mosh_cd, &mosh_exit, &mosh_help, &mosh_alias, &mosh_command, nullptr,
 };
 
 BuiltinStatus mosh_cd(char **args, Environment *env) {
@@ -107,4 +108,17 @@ defer:
     string_delete(&name);
     string_delete(&value);
     return result;
+}
+
+BuiltinStatus mosh_command(char **args, Environment *env) {
+    unused(env);
+    LauncherState result = execute_command(args);
+    switch (result) {
+    case LAUNCHER_SUCCESS:
+        return BUILTIN_SUCCESS;
+    case LAUNCHER_EXIT:
+        return BUILTIN_EXIT;
+    case LAUNCHER_FAILURE:
+        return BUILTIN_FAIL;
+    }
 }
