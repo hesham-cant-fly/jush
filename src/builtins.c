@@ -12,12 +12,12 @@
 #include <unistd.h>
 
 char *builtin_str[] = {
-    "cd", "exit", "help", "alias", "command", "set", nullptr,
+    "cd", "exit", "help", "alias", "command", "set", "export", nullptr,
 };
 
 BuiltinStatus (*builtin_func[])(char **, Environment *) = {
-    &mosh_cd,      &mosh_exit, &mosh_help, &mosh_alias,
-    &mosh_command, &mosh_set,  nullptr,
+    &mosh_cd,      &mosh_exit, &mosh_help,   &mosh_alias,
+    &mosh_command, &mosh_set,  &mosh_export, nullptr,
 };
 
 BuiltinStatus mosh_cd(char **args, Environment *env) {
@@ -130,11 +130,26 @@ BuiltinStatus mosh_set(char **args, Environment *env) {
         return BUILTIN_SUCCESS;
     }
     if (args[2] == nullptr) {
-        printf("Exepected `value`.");
+        printf("Exepected `value`.\n");
         return BUILTIN_FAIL;
     }
     const char *id = args[1];
     const char *value = args[2];
     env_set(env, id, strdup(value));
+    return BUILTIN_SUCCESS;
+}
+
+BuiltinStatus mosh_export(char **args, Environment *env) {
+    unused(env);
+    if (args[1] == nullptr) {
+        return BUILTIN_SUCCESS;
+    }
+    const char *id = args[1];
+    if (args[2] == nullptr) {
+        setenv(id, env_get(env, id), 1);
+        return BUILTIN_FAIL;
+    }
+    const char *value = args[2];
+    setenv(id, value, 1);
     return BUILTIN_SUCCESS;
 }

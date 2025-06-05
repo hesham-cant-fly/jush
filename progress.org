@@ -6,3 +6,4 @@
 - [X] ~command~ built-in
 - [X] subtitution
 - [X] =set= built-in
+- [X] =export= built-in

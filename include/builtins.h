@@ -17,5 +17,6 @@ BuiltinStatus mosh_help(char **args, Environment *env);
 BuiltinStatus mosh_alias(char **args, Environment *env);
 BuiltinStatus mosh_command(char **args, Environment *env);
 BuiltinStatus mosh_set(char **args, Environment *env);
+BuiltinStatus mosh_export(char **args, Environment *env);
 
 #endif // BUILTINS_H_
