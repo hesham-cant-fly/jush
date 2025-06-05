@@ -1,0 +1,6 @@
+#+title: Progress
+
+- [X] Execution
+- [X] Strings litterals
+- [X] ~alias~ built-in
+- [X] ~command~ built-in
