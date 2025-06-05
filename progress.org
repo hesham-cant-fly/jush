@@ -5,3 +5,4 @@
 - [X] ~alias~ built-in
 - [X] ~command~ built-in
 - [X] subtitution
+- [X] =set= built-in

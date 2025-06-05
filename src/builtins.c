@@ -12,11 +12,12 @@
 #include <unistd.h>
 
 char *builtin_str[] = {
-    "cd", "exit", "help", "alias", "command", nullptr,
+    "cd", "exit", "help", "alias", "command", "set", nullptr,
 };
 
 BuiltinStatus (*builtin_func[])(char **, Environment *) = {
-    &mosh_cd, &mosh_exit, &mosh_help, &mosh_alias, &mosh_command, nullptr,
+    &mosh_cd,      &mosh_exit, &mosh_help, &mosh_alias,
+    &mosh_command, &mosh_set,  nullptr,
 };
 
 BuiltinStatus mosh_cd(char **args, Environment *env) {
@@ -122,4 +123,18 @@ BuiltinStatus mosh_command(char **args, Environment *env) {
         return BUILTIN_FAIL;
     }
     unreachable();
+}
+
+BuiltinStatus mosh_set(char **args, Environment *env) {
+    if (args[1] == nullptr) {
+        return BUILTIN_SUCCESS;
+    }
+    if (args[2] == nullptr) {
+        printf("Exepected `value`.");
+        return BUILTIN_FAIL;
+    }
+    const char *id = args[1];
+    const char *value = args[2];
+    env_set(env, id, strdup(value));
+    return BUILTIN_SUCCESS;
 }
