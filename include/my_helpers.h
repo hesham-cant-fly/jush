@@ -12,7 +12,7 @@
 #define unimplemented()                                                        \
     do {                                                                       \
         printf("Unimplemented: %s:%d\n", __FILE__, __LINE__);                  \
-        exit(69);                                                              \
+        exit(100);                                                             \
     } while (0)
 
 #endif // MY_HELPERS_H_

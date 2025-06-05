@@ -1,7 +1,8 @@
 #include "environment.h"
 #include "my_hash.h"
+#include "my_helpers.h"
 #include <stddef.h>
-#include <stdio.h>
+#include <stdlib.h>
 
 Environment init_env() {
     Environment result;
@@ -16,6 +17,11 @@ void deinit_env(Environment *self) {
         free(entry->value);
     }
     hm_deinit(self->aliases);
+}
+
+const char *env_get(Environment *self, const char *key) {
+    unused(self);
+    return getenv(key);
 }
 
 Alias *env_get_alias(Environment *self, const char *key) {

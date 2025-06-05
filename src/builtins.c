@@ -121,4 +121,5 @@ BuiltinStatus mosh_command(char **args, Environment *env) {
     case LAUNCHER_FAILURE:
         return BUILTIN_FAIL;
     }
+    unreachable();
 }

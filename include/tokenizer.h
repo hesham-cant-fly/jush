@@ -1,6 +1,7 @@
 #ifndef TOKENIZER_H_
 #define TOKENIZER_H_
 
+#include "environment.h"
 #include "my_string.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -22,6 +23,7 @@ typedef struct Token {
 } Token;
 
 typedef struct Tokenizer {
+    Environment *env;
     Token current_tok;
     Token prev_tok;
     String current_lexem;
@@ -32,7 +34,7 @@ typedef struct Tokenizer {
     bool done;
 } Tokenizer;
 
-Tokenizer init_tokenizer(char *source);
+Tokenizer init_tokenizer(char *source, Environment *env);
 void deinit_tokenizer(Tokenizer *self);
 Token scan_token(Tokenizer *self);
 

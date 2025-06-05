@@ -23,7 +23,7 @@ static bool at_end(Self self);
 Launcher init_launcher(char *source, Environment *env) {
     Launcher result = {
         .env = env,
-        .tokenize = init_tokenizer(source),
+        .tokenize = init_tokenizer(source, env),
     };
     advance(&result);
     return result;

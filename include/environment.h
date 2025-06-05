@@ -14,6 +14,8 @@ typedef struct Environment {
 Environment init_env();
 void deinit_env(Environment *self);
 
+const char *env_get(Environment *self, const char *key);
+
 Alias *env_get_alias(Environment *self, const char *key);
 void env_set_alias(Environment *self, const char *key, char *value);
 
