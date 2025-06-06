@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #define MOSH_DEFAULT_PROMPET "$"
@@ -18,15 +19,26 @@ char *get_default_prompet() {
     if (buf == nullptr) {
         return nullptr;
     }
-    size_t len = snprintf(NULL, 0, "[%s %s/]%s ", getenv("USER"), the_basename,
-                          MOSH_DEFAULT_PROMPET);
+    size_t len = 0;
+    if (strcmp(buf, getenv("HOME")) == 0) {
+        len = snprintf(NULL, 0, "[%s ~]%s ", getenv("USER"),
+                       MOSH_DEFAULT_PROMPET);
+    } else {
+        len = snprintf(NULL, 0, "[%s %s/]%s ", getenv("USER"), the_basename,
+                       MOSH_DEFAULT_PROMPET);
+    }
     char *out = malloc(len + 1);
     if (out == nullptr) {
         free(buf);
         return nullptr;
     }
-    snprintf(out, len + 1, "[%s %s/]%s ", getenv("USER"), the_basename,
-             MOSH_DEFAULT_PROMPET);
+    if (strcmp(buf, getenv("HOME")) == 0) {
+        snprintf(out, len + 1, "[%s ~]%s ", getenv("USER"),
+                 MOSH_DEFAULT_PROMPET);
+    } else {
+        snprintf(out, len + 1, "[%s %s/]%s ", getenv("USER"), the_basename,
+                 MOSH_DEFAULT_PROMPET);
+    }
     free(buf);
     return out;
 }

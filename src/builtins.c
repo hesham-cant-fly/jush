@@ -23,8 +23,12 @@ BuiltinStatus (*builtin_func[])(char **, Environment *) = {
 BuiltinStatus mosh_cd(char **args, Environment *env) {
     unused(env);
     if (args[1] == nullptr) {
-        fprintf(stderr, "mosh: Expected argument to \"cd\".\n");
-        return BUILTIN_FAIL;
+        // fprintf(stderr, "mosh: Expected argument to \"cd\".\n");
+        if (chdir(getenv("HOME")) != 0) {
+            perror("mosh");
+            return BUILTIN_FAIL;
+        }
+        return BUILTIN_SUCCESS;
     }
     if (chdir(args[1]) != 0) {
         perror("mosh");
