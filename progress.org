@@ -8,3 +8,8 @@
 - [X] =set= built-in
 - [X] =export= built-in
 - [X] the expantion of =~=
+- [-] Spawing Background process
+- [X] Special Variables
+  - [X] =$?=
+    - [TODO] background status or we don't allow that.
+  - [X] =$!=

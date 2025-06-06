@@ -39,6 +39,9 @@ const char *env_get(Environment *self, const char *key) {
 }
 
 void env_set(Environment *self, const char *key, const char *value) {
+    if (hm_contains(self->variables, (char *)key)) {
+        free(hm_get(self->variables, (char *)key));
+    }
     hm_set(self->variables, (char *)key, (char *)value);
 }
 

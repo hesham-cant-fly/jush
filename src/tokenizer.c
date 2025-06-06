@@ -58,6 +58,8 @@ Token scan_token(Tokenizer *self) {
         return make_token(self, TOKEN_SEMICOLON);
     case '\n':
         return make_token(self, TOKEN_EOL);
+    case '&':
+        return make_token(self, TOKEN_AMPERSAND);
     case '$':
         return scan_substitution(self);
     case '~':
@@ -110,25 +112,48 @@ static Token scan_symbol(Self self) {
 
 static Token scan_substitution(Self self) {
     // TODO: Add support for getting arguments
-    if (!_isalpha(peek(self))) {
-        string_push(&self->current_lexem, previous(self));
-        Token res = make_token(self, TOKEN_SYMBOL);
-        return res;
+    char ch = peek(self);
+    switch (ch) {
+    case '!': {
+        advance(self);
+        char *buf = (char *)env_get(self->env, "!");
+        if (buf == nullptr)
+            buf = "";
+        string_push(&self->current_lexem, buf);
+        return make_token(self, TOKEN_SYMBOL);
     }
-    size_t current_lexem_len = self->current_lexem.len;
+    case '?': {
+        advance(self);
+        char *buf = (char *)env_get(self->env, "?");
+        if (buf == nullptr)
+            buf = "0";
+        string_push(&self->current_lexem, buf);
+        return make_token(self, TOKEN_SYMBOL);
+    }
+    default: {
+        size_t current_lexem_len = self->current_lexem.len;
 
-    size_t varname_len = 0;
-    while (_isalnum(peek(self))) {
-        string_push(&self->current_lexem, advance(self));
-        varname_len++;
+        if (!_isalpha(peek(self))) {
+            string_push(&self->current_lexem, previous(self));
+            Token res = make_token(self, TOKEN_SYMBOL);
+            return res;
+        }
+
+        size_t varname_len = 0;
+        while (_isalnum(peek(self))) {
+            string_push(&self->current_lexem, advance(self));
+            varname_len++;
+        }
+        const char *sym =
+            env_get(self->env, self->current_lexem.data + current_lexem_len);
+        if (sym == nullptr)
+            sym = "";
+        self->current_lexem.len -= varname_len;
+        string_push(&self->current_lexem, (char *)sym);
+        return make_token(self, TOKEN_SYMBOL);
     }
-    const char *sym =
-        env_get(self->env, self->current_lexem.data + current_lexem_len);
-    if (sym == nullptr)
-        sym = "";
-    self->current_lexem.len -= varname_len;
-    string_push(&self->current_lexem, (char *)sym);
-    return make_token(self, TOKEN_SYMBOL);
+    }
+    unreachable();
 }
 
 static char peek(Self self) { return self->source[self->current]; }

@@ -117,7 +117,7 @@ defer:
 
 BuiltinStatus mosh_command(char **args, Environment *env) {
     unused(env);
-    LauncherState result = execute_command(args);
+    LauncherState result = execute_command(args, env);
     switch (result) {
     case LAUNCHER_SUCCESS:
         return BUILTIN_SUCCESS;

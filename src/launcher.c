@@ -45,10 +45,10 @@ LauncherState launcher_launch(Launcher *self) {
 
     while (!at_end(self)) {
         arrsetlen(args, 0);
+        Token tok = {0};
         while (!at_end(self)) {
-            Token tok = advance(self);
-            if (tok.kind == TOKEN_EOL || tok.kind == TOKEN_EOF ||
-                tok.kind == TOKEN_SEMICOLON) {
+            tok = advance(self);
+            if (tok.kind != TOKEN_SYMBOL) {
                 arrpush(args, nullptr); // let it leak 🗣
                 break;
             }
@@ -58,10 +58,18 @@ LauncherState launcher_launch(Launcher *self) {
             arrpush(args, arg);
         }
         arrpush(args, nullptr);
-
-        if (args[0] != nullptr) {
-            result = execute(self, args);
+        switch (tok.kind) {
+        case TOKEN_AMPERSAND:
+            if (args[0] != nullptr) {
+                result = execute_background(self, args);
+            }
+            break;
+        default:
+            if (args[0] != nullptr) {
+                result = execute_wait(self, args);
+            }
         }
+
         for (size_t i = 0; args[i] != nullptr; i++) {
             free(args[i]);
             args[i] = nullptr;
@@ -91,7 +99,7 @@ static Token previous(Self self) { return self->tokenize.prev_tok; }
 static Token peek(Self self) { return self->tokenize.current_tok; }
 static bool at_end(Self self) { return self->tokenize.done; }
 
-LauncherState execute(Self self, char **args) {
+LauncherState execute_wait(Self self, char **args) {
     // Check for aliases
     {
         Alias *alias = env_get_alias(self->env, args[0]);
@@ -99,9 +107,10 @@ LauncherState execute(Self self, char **args) {
             String alias_args = string_from_chars_copy(alias->value);
             string_reserve(&alias_args, alias_args.len + 1);
             for (size_t i = 1; args[i] != nullptr; i++) {
+                string_push(&alias_args, (char)' ');
                 string_push(&alias_args, args[i]);
             }
-            LauncherState result = launch(alias->value, self->env);
+            LauncherState result = launch(alias_args.data, self->env);
             string_delete(&alias_args);
             return result;
         }
@@ -123,18 +132,33 @@ LauncherState execute(Self self, char **args) {
     }
 
     // Execute the actual command
-    return execute_command(args);
-
-    // Child's exit code
-    // if (WIFEXITED(status)) {
-    //     return WEXITSTATUS(status);
-    // } else { // Child was terminated by a signal
-    //     return -1;
-    // }
-    // return LAUNCHER_SUCCESS;
+    return execute_command(args, self->env);
 }
 
-LauncherState execute_command(char **args) {
+// TODO: Support for built-in commands and aliases
+LauncherState execute_background(Launcher *self, char **args) {
+    unused(self);
+    pid_t pid = fork();
+    if (pid == 0) {
+        if (execvp(args[0], args) == -1) {
+            perror("mosh");
+            exit(EXIT_FAILURE);
+        }
+        printf("[1] Done! %d\n", getpid());
+    } else if (pid < 0) {
+        perror("mosh");
+        return LAUNCHER_FAILURE;
+    }
+
+    printf("[1] %d\n", pid);
+    char pid_str[20] = {0};
+    sprintf(pid_str, "%d", pid);
+    env_set(self->env, "!", strdup(pid_str));
+
+    return LAUNCHER_SUCCESS;
+}
+
+LauncherState execute_command(char **args, Environment *env) {
     int status = 0;
     pid_t pid = fork(), wpid;
     unused(wpid);
@@ -155,6 +179,16 @@ LauncherState execute_command(char **args) {
             }
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
     }
+
+    char status_str[20] = {0};
+    if (WIFEXITED(status)) {
+        sprintf(status_str, "%i", WEXITSTATUS(status));
+    } else if (WIFSIGNALED(status)) {
+        status_str[0] = '-';
+        status_str[1] = '1';
+        status_str[2] = '\0';
+    }
+    env_set(env, "?", strdup(status_str));
 
     return LAUNCHER_SUCCESS;
 }

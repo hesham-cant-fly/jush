@@ -13,6 +13,25 @@
 #include <time.h>
 #include <unistd.h>
 
+void handle_sigchld(int sig) {
+    unused(sig);
+    int status;
+    pid_t pid;
+
+    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+
+        if (WIFEXITED(status)) {
+            printf("[?] Done! %d", getpid());
+            printf("  Exit status: %d\n", WEXITSTATUS(status));
+        } else if (WIFSIGNALED(status)) {
+            printf("[?] Done! %d", getpid());
+            printf("  Terminated by signal: %d\n", WTERMSIG(status));
+        } else {
+            printf("[?] Done! %d\n", getpid());
+        }
+    }
+}
+
 char *read_line() {
     char *prompet = get_default_prompet();
     if (prompet == nullptr)
@@ -95,6 +114,15 @@ defer:
 }
 
 int main() {
+    struct sigaction sa;
+    sa.sa_handler = handle_sigchld;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    if (sigaction(SIGCHLD, &sa, 0) == -1) {
+        perror("sigaction failed");
+        exit(1);
+    }
+
     int status = start_shell();
     return status;
 }
