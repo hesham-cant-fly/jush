@@ -67,7 +67,11 @@ int start_shell() {
     size_t result = 0;
     char *buf = nullptr;
     Environment env = init_env();
-    run_file(MOSH_DEFAULT_CONFIG_PATH, &env);
+    {
+        char *path = MOSH_DEFAULT_CONFIG_PATH;
+        run_file(path, &env);
+        free(path);
+    }
 
     while (true) {
         buf = read_line();

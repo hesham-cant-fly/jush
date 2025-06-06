@@ -11,7 +11,14 @@
 #define MOSH_DEFAULT_PROMPET "$"
 #define MOSH_DEFAULT_VERSION "0.0.1"
 #define MOSH_DEFAULT_LEN 50
-#define MOSH_DEFAULT_CONFIG_PATH "./.moshrc"
+#define MOSH_DEFAULT_CONFIG_PATH get_default_config_path()
+
+char *get_default_config_path() {
+    size_t len = snprintf(nullptr, 0, "%s/.moshrc", getenv("HOME"));
+    char *result = malloc(len + 1);
+    snprintf(result, len + 1, "%s/.moshrc", getenv("HOME"));
+    return result;
+}
 
 char *get_default_prompet() {
     char *buf = getcwd(nullptr, 0);
