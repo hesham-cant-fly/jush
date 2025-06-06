@@ -7,3 +7,4 @@
 - [X] subtitution
 - [X] =set= built-in
 - [X] =export= built-in
+- [X] the expantion of =~=

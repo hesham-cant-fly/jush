@@ -5,6 +5,7 @@
 #include <readline/readline.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef Tokenizer *Self;
@@ -59,6 +60,9 @@ Token scan_token(Tokenizer *self) {
         return make_token(self, TOKEN_EOL);
     case '$':
         return scan_substitution(self);
+    case '~':
+        string_push(&self->current_lexem, getenv("HOME"));
+        return make_token(self, TOKEN_SYMBOL);
     default:
         self->current--;
         return scan_symbol(self);
