@@ -11,6 +11,9 @@ typedef enum TokenKind : uint8_t {
     TOKEN_EOF = 1,
     TOKEN_ERROR,
     TOKEN_SYMBOL,
+    TOKEN_IF,        // 'if'
+    TOKEN_DO,        // 'do'
+    TOKEN_END,       // 'end'
     TOKEN_AMPERSAND, // '&'
     TOKEN_SEMICOLON, // ';'
 } TokenKind;

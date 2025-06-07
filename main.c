@@ -19,16 +19,15 @@ void handle_sigchld(int sig) {
     pid_t pid;
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-
-        if (WIFEXITED(status)) {
-            printf("[?] Done! %d", getpid());
-            printf("  Exit status: %d\n", WEXITSTATUS(status));
-        } else if (WIFSIGNALED(status)) {
-            printf("[?] Done! %d", getpid());
-            printf("  Terminated by signal: %d\n", WTERMSIG(status));
-        } else {
-            printf("[?] Done! %d\n", getpid());
-        }
+        // if (WIFEXITED(status)) {
+        //     printf("[?] Done! %d", getpid());
+        //     printf("  Exit status: %d\n", WEXITSTATUS(status));
+        // } else if (WIFSIGNALED(status)) {
+        //     printf("[?] Done! %d", getpid());
+        //     printf("  Terminated by signal: %d\n", WTERMSIG(status));
+        // } else {
+        //     printf("[?] Done! %d\n", getpid());
+        // }
     }
 }
 
@@ -51,7 +50,7 @@ int run_file(const char *path, Environment *env) {
     int result = 0;
     FILE *f = fopen(path, "r");
     if (f == nullptr) {
-        return result;
+        return 1;
     }
     fseek(f, 0, SEEK_END);
     size_t content_len = ftell(f);
@@ -113,7 +112,7 @@ defer:
     return result;
 }
 
-int main() {
+int main(int argc, char **argv) {
     struct sigaction sa;
     sa.sa_handler = handle_sigchld;
     sigemptyset(&sa.sa_mask);
@@ -123,6 +122,14 @@ int main() {
         exit(1);
     }
 
-    int status = start_shell();
-    return status;
+    if (argc < 2) {
+        int status = start_shell();
+        return status;
+    } else {
+        char *fname = argv[1];
+        Environment env = init_env();
+        int res = run_file(fname, &env);
+        deinit_env(&env);
+        return res;
+    }
 }

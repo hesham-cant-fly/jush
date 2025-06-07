@@ -1,14 +1,22 @@
 #include "tokenizer.h"
 #include "environment.h"
+#include "my_hash.h"
 #include "my_helpers.h"
 #include "my_string.h"
-#include <readline/readline.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 typedef Tokenizer *Self;
+
+struct Keyword {
+    void *next;
+    char *key;
+    TokenKind value;
+};
+
+static struct Keyword *keywords = nullptr;
 
 static char peek(Self self);
 static char advance(Self self);
@@ -18,13 +26,24 @@ static bool is_forbiden(char ch);
 static bool _isalpha(const char ch);
 static bool _isnum(const char ch);
 static bool _isalnum(const char ch);
+static void scan_string(Self self);
 static Token scan_substitution(Self self);
 static Token scan_symbol(Self self);
 static void skip_white_space(Self self);
 static void setup_scan(Self self);
 static Token make_token(Self self, TokenKind kind);
 
+void init_keywords(void) {
+    keywords = hm_init(struct Keyword);
+    hm_set(keywords, "if", TOKEN_IF);
+    hm_set(keywords, "do", TOKEN_DO);
+    hm_set(keywords, "end", TOKEN_END);
+}
+
 Tokenizer init_tokenizer(char *source, Environment *env) {
+    if (keywords == nullptr) {
+        init_keywords();
+    }
     Tokenizer tok;
     memset(&tok, 0, sizeof(Tokenizer));
     tok.env = env;
@@ -72,9 +91,8 @@ Token scan_token(Tokenizer *self) {
 }
 
 static Token scan_symbol(Self self) {
-    char ch;
+    char ch = peek(self);
     do {
-        ch = peek(self);
         if (ch == '\0') {
             if (lexem_len(self) == 0)
                 return make_token(self, TOKEN_EOF);
@@ -87,17 +105,7 @@ static Token scan_symbol(Self self) {
             string_push(&self->current_lexem, peek(self));
             break;
         case '"':
-            advance(self);
-            while (peek(self) != '"') {
-                char ch = advance(self);
-                switch (ch) {
-                case '$':
-                    scan_substitution(self);
-                    break;
-                default:
-                    string_push(&self->current_lexem, ch);
-                }
-            }
+            scan_string(self);
             break;
         default:
             string_push(&self->current_lexem, ch);
@@ -107,7 +115,24 @@ static Token scan_symbol(Self self) {
         ch = peek(self);
     } while (!is_forbiden(ch));
 
+    if (hm_contains(keywords, self->current_lexem.data)) {
+        return make_token(self, hm_get(keywords, self->current_lexem.data));
+    }
     return make_token(self, TOKEN_SYMBOL);
+}
+
+static void scan_string(Self self) {
+    advance(self);
+    while (peek(self) != '"') {
+        char ch = advance(self);
+        switch (ch) {
+        case '$':
+            scan_substitution(self);
+            break;
+        default:
+            string_push(&self->current_lexem, ch);
+        }
+    }
 }
 
 static Token scan_substitution(Self self) {
@@ -167,6 +192,7 @@ static bool is_forbiden(char ch) {
     case '\r':
     case '\n':
     case ';':
+    case '&':
         return true;
     default:
         return false;

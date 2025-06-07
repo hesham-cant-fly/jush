@@ -8,6 +8,7 @@ typedef enum LauncherState : int {
     LAUNCHER_SUCCESS,
     LAUNCHER_EXIT,
     LAUNCHER_FAILURE,
+    LAUNCHER_SYNTAX_ERROR,
 } LauncherState;
 
 typedef struct Launcher {
