@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.12.0)
 project(mosh)
 
 set(EXPORT_COMPILE_COMMANDS ON)
@@ -14,13 +14,20 @@ set(CMAKE_BUILD_TYPE Debug)
 
 add_compile_options(-Wall -Wextra -g)
 
+# Packages
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(READLINE REQUIRED readline)
+if(NOT DEFINED READLINE_FOUND)
+  message(FATAL_ERROR "readline was not found")
+endif()
+
 # Compiler options
 file(GLOB_RECURSE SOURCES PUBLIC src/*.c)
 add_executable(${CMAKE_PROJECT_NAME} main.c ${SOURCES})
 target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -fsanitize=address)
 target_include_directories(
   ${CMAKE_PROJECT_NAME} PUBLIC include/
-  $ENV{READLINE_INCLUDE_PATH}
+  ${READLINE_INCLUDE_DIRS}
 )
 
 # Linking
@@ -28,10 +35,8 @@ target_link_options(
   ${CMAKE_PROJECT_NAME}
   PUBLIC
   -fsanitize=address
-  -L$ENV{READLINE_LINK_PATH}
 )
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}
-  readline
-  history
+  ${READLINE_LINK_LIBRARIES}
 )

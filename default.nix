@@ -1,5 +1,4 @@
 { pkgs ? import <nixpkgs> {} }:
-
 pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
     clang
@@ -8,15 +7,15 @@ pkgs.mkShell {
     pkg-config
   ];
 
-  buildInputs = with pkgs;[
-    readline.dev
-    readline
+  buildInputs = with pkgs; [
     ncurses
+    readline
+    readline.dev
   ];
+
+  PKG_CONFIG_PATH = with pkgs; "${readline.dev}/lib/pkgconfig";
 
   CC = "clang";
   CXX = "clang++";
-
-  READLINE_INCLUDE_PATH = "${pkgs.readline.dev}/include";
-  READLINE_LINK_PATH = "${pkgs.readline}/lib";
 }
+
